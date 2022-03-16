@@ -3,15 +3,34 @@
        <template v-slot:header>
            <div class="flex items-center justify-between">
                <h1 class="text-3xl font-bold text-gray-900">
-                   {{ model.id ? model.title : "Create a Survey"}}
+                   {{ route.params.id ? model.title : "Create a Survey"}}
                </h1>
+
+                <button
+                    v-if="route.params.id"
+                    type="button"
+                    class="py-2 px-3 text-white bg-red-500 rounded-md hover:bg-red-700"
+                    @click="deleteSurvey()"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 -mt-1 inline-block text-white mr-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                   
+                    Delete Survey
+
+               </button>
            </div>
        </template>
+       <div v-if="surveyLoading" class="flex justify-center">
+           Loading...
+       </div>
        
-       <form @submit.prevent="saveSurvey">
+       <form v-else @submit.prevent="saveSurvey" class="animate-fade-in-down">
            <div class="shadow sm:rounded-md sm:overflow-hidden">
                <!-- Survey Fields -->
+               
                <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+                   
                    <!-- Image -->
                     <div>
                         <label class=" block text-sm font-medium text-gray-700">
@@ -66,8 +85,20 @@
                     </div>
                    <!--/ Image -->
 
-                   <!-- Title -->
+                  
+
+                    <div v-if="errorMsg" class="flex items-center justify-between py-3 px-5 bg-red-500 text-white rounded">
+                        <p class="text-sm" v-html="errorMsg"></p>
+                        <span @click="errorMsg = ''" class="w-6 h-6 cursor-pointer flex items-center justify-center rounded-full transition-colors hover:bg-[rgba(0,0,0,0.2)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </span>
+                    </div>
+                    
+                    <!-- Title -->
                     <div>
+
                         <label for="title" class="block text-sm font-medium text-gray-700" >
                             Title
                         </label>
@@ -187,7 +218,7 @@
 <script setup>
     import { v4 as uuidv4 } from 'uuid';
     import store from "../store";
-    import { ref } from "vue";
+    import { ref, watch, computed } from "vue";
     import { useRoute, useRouter } from "vue-router";
 
     import PageComponent from '../components/PageComponent.vue';
@@ -195,15 +226,29 @@
 
     const router = useRouter();
     const route = useRoute();
+    const surveyLoading = computed(() => store.state.currentSurvey.loading)
+    let errorMsg = ref('');
+    
     // Create empty survey
     let model = ref({
         title: "",
         status: false,
         description: null,
-        image: null,
+        image_url: null,
         expire_date: null,
         questions: [],
     });
+
+    // Watch to current survey data change and when this happens we update local model
+    watch(
+        () => store.state.currentSurvey.data,
+        (newVal, oldVal) => {
+            model.value = {
+                ...JSON.parse(JSON.stringify(newVal)),
+                status: newVal.status !== "draft",
+            };
+        }
+    );
 
     if (route.params.id) {
         store.dispatch('getSurvey', route.params.id);
@@ -237,7 +282,7 @@
     function deleteQuestion(question) {
         model.value.questions = model.value.questions.filter(
             (q) => q !== question
-        )
+        );
     }
 
     function questionChange(question) {
@@ -251,12 +296,31 @@
     function saveSurvey(){
         store
             .dispatch("saveSurvey", model.value)
-            .then(({data}) => {
+            .then(({ data }) => {
+                store.commit('notify', {
+                    type: 'success',
+                    message: 'Survey was successfully updated'
+                })
                 router.push({
                     name: "SurveyView",
                     params: { id: data.data.id }
-                })
+                });
+            }).catch(err => {
+                errorMsg.value = err.response.data.message;
             });
+    }
+
+    function deleteSurvey(){
+        if(
+            confirm(`Are you sure you want to delete this survey? Operation can't be undone`)
+        ){
+            store.dispatch("deleteSurvey", model.value.id).then(() => {
+                    router.push({
+                        name: "Surveys",
+                    });
+                });
+
+        }
     }
 </script>
 

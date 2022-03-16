@@ -220,7 +220,7 @@
 
     // Emit the data change
     function dataChange() {
-        const data = JSON.parse(JSON.stringify(model.value))
+        const data = JSON.parse(JSON.stringify(model.value));
         if (!shouldHaveOptions()) {
             delete data.data.options;
         }
@@ -231,7 +231,7 @@
         emit("addQuestion", props.index + 1);
     }
 
-    function deleteQuestion(question) {
+    function deleteQuestion() {
         emit("deleteQuestion", props.question);
     }
 

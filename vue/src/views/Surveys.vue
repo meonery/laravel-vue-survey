@@ -23,38 +23,47 @@
                 </router-link>
             </div>
         </template>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
-            <div 
-                v-for="survey in surveys" 
+
+        <div v-if="surveys.loading" class="flex justify-center">
+           Loading...
+        </div>
+        <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
+            <SurveyListItem 
+                v-for="(survey, ind) in surveys.data"
                 :key="survey.id" 
-                class="flex flex-col py-4 px-6 shadow-md bg-white hover:bg-gray-50 h-[470px]">
+                :survey="survey"
+                class="opacity-0 animate-fade-in-down"
+                :style="{animationDelay: `${ind * 0.1}s`}"
+                @delete="deleteSurvey(survey)"
+            />
+            
+        </div>
+        <div class="flex justify-center mt-5">
+            <nav 
+                class="relative z-0 inline-flex justify-center rounded-md shadow-sm"
+                aria-label="pagination"
+            >
+                <!-- Current: "z-10 bg-indigo-50 border-indigo-500 text-indigo-600" -->
+                <a 
+                    v-for="(link, i) of surveys.links"
+                    :key="i"
+                    :disabled:="!link.url"
+                    href="#"
+                    @click="getForPage($event,link)"
+                    aria-current="page"
+                    class="relative inline-flex items-center px-4 py-2 border text-sm font-medium whitespace-nowrap"
+                    :class="[
+                        link.active 
+                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' 
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
+                        i === 0 ? 'rounded-l-md' : '',
+                        i === surveys.links.length - 1 ? 'rounded-r-md' : '',
+                    ]"
+                    v-html="link.label"
+                >
 
-                <img :src="survey.image" :alt="survey.slug" class="w-full h-4/6 object-cover"/>
-                <h4 class="mt-4 text-lg font-bold">{{ survey.title }}</h4>
-                <div v-html="survey.description" class="overflow-hidden flex-1"></div>
-
-                <div class="flex justify-between items-center mt-3">
-                    <router-link
-                        :to="{ name: 'SurveyView', params: {id: survey.id} }"
-                        class="flex items-center py-2 px-4 border border-transparent text-sm rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        Edit
-                    </router-link>
-                    <button
-                        v-if="survey.id"
-                        type="button"
-                        @click="deleteSurvey(survey)"
-                        class="h-8 w-8 flex items-center justify-center rounded-full border border-transparent text-sm text-red-500 focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+                </a>
+            </nav>
         </div>
     </PageComponent>
 </template>
@@ -62,13 +71,31 @@
 <script setup>
 import store from '../store';
 import { computed } from 'vue';
+import SurveyListItem from '../components/SurveyListItem.vue';
 import PageComponent from '../components/PageComponent.vue';
 
 const surveys =  computed(() => store.state.surveys);
 
+store.dispatch('getSurveys')
+
 function deleteSurvey(survey){
     if(confirm(`Are you sure you want to delete this survey? Operation can't be undone!!`)) {
-        
+        store
+            .dispatch("deleteSurvey", survey.id)
+            .then(() =>{
+                store.dispatch('getSurveys')
+            })
     }
+}
+
+function getForPage(ev, link) {
+    ev.preventDefault();
+    if (!link.url || link.active){
+        return;
+    }
+
+    store.dispatch("getSurveys", {
+        url: link.url
+    });
 }
 </script>
