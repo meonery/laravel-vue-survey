@@ -109,9 +109,7 @@ import axiosClient from "../axios";
 const store = createStore({
     state: {
         user: {
-            data: {
-                imageUrl: 'https://picsum.photos/id/1005/600/200',
-            },
+            data: {},
             
             token: sessionStorage.getItem("TOKEN"),
         },

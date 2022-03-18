@@ -31,9 +31,21 @@
                     <div>Create date:</div>
                     <div>{{ data.latestSurvey.created_at }}</div>
                 </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <div>Expiry date:</div>
+                    <div>{{ data.latestSurvey.expire_date }}</div>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <div>Status:</div>
+                    <div :class="data.latestSurvey.status === 'Active' ? 'text-red-600' : 'text-green-600'">{{ data.latestSurvey.status ? 'Active' : 'Draft' }}</div>
+                </div>
+                <div class="flex justify-between text-sm mb-1">
+                    <div>Questions:</div>
+                    <div>{{ data.latestSurvey.questions }}</div>
+                </div>
                 <div class="flex justify-between text-sm mb-3">
                     <div>Answers:</div>
-                    <div>{{ data.totalAnswers }}</div>
+                    <div>{{ data.latestSurvey.answers }}</div>
                 </div>
                 <div class="flex justify-between">
                     <router-link :to="{ name: 'SurveyView', params: {id: data.latestSurvey.id} }" 
