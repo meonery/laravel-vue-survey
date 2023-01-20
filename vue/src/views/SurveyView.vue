@@ -137,14 +137,14 @@
                    <!-- Expire Data -->
                     <div>
                         <label for="about" class="block text-sm font-medium text-gray-700" >
-                            Expiry Date
+                            Expiry Date (must be date after tomorrow)
                         </label>
                         <input 
                             type="date" 
                             name="expire_date" 
                             id="expire_date"
                             v-model="model.expire_date"
-                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required=""
                         />
                     </div>
                    <!--/ Expire Data -->
